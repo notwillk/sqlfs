@@ -1,0 +1,25 @@
+{
+	"name": "sqlfs",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+	"features": {
+		"./features/entr": {},
+		"./features/goreleaser": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/notwillk/devcontainer-features/devcontainer-cli": {},
+		"ghcr.io/notwillk/devcontainer-features/golang": { "version": "1.25.4" },
+		"ghcr.io/notwillk/devcontainer-features/just": {}
+	},
+	"containerEnv": {
+		"REPO_PATH": "${containerWorkspaceFolder}"
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"github.vscode-github-actions",
+				"golang.go",
+				"skellock.just"
+			]
+		}
+	},
+	"remoteUser": "vscode"
+}
