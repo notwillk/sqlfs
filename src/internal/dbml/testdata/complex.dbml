@@ -1,0 +1,53 @@
+Project ecommerce {
+  database_type: 'PostgreSQL'
+  Note: 'E-commerce database schema'
+}
+
+Table "public"."customers" as C {
+  id integer [pk, increment]
+  full_name varchar(200) [not null]
+  email varchar(255) [unique, not null]
+  phone varchar(20)
+  address text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp
+
+  Note: 'Customer information'
+
+  indexes {
+    email [unique, name: 'idx_customers_email']
+    (full_name, email) [name: 'idx_customers_name_email']
+  }
+}
+
+Table orders {
+  id integer [pk]
+  customer_id integer [not null, ref: > customers.id]
+  total decimal(10, 2)
+  status order_status [default: 'pending']
+  notes text [null]
+  created_at timestamp [default: `now()`]
+
+  indexes {
+    `now()` [name: 'idx_orders_created']
+  }
+}
+
+Table order_items {
+  id integer [pk]
+  order_id integer [not null]
+  product_id integer [not null]
+  qty integer [default: 1]
+  price decimal(10, 2) [not null]
+}
+
+enum order_status {
+  pending [note: 'Awaiting payment']
+  "paid"
+  shipped
+  delivered
+  cancelled
+}
+
+Ref: orders.customer_id > customers.id [delete: cascade, update: no action]
+Ref fk_items_order: order_items.order_id > orders.id [delete: cascade]
