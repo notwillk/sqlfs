@@ -77,7 +77,7 @@ It specifies:
 - The name/location of the `schema.dbml` file
 - The invalid behavior (the CLI argument overrides this)
 - The SQL server's port (the CLI argument overrides this)
-- The SQL server's credential vairables (defaults: `SQLFS_USERNAME` and `SQLFS_PASSWORD`)
+- The SQL server's credential variables (defaults: `SQLFS_USERNAME` and `SQLFS_PASSWORD`)
 
 ### Schema definition
 
