@@ -22,7 +22,7 @@ On error, it should return a non-zero exit code.
 ##### Parameters
 
 - `root` (required) - the root directory that contains the static files to populate the database
-- `outfile-file` - optional location of the file to write the json schema to, if none provided it is written to `stdout`
+- `output-file` - optional location of the file to write the json schema to, if none provided it is written to `stdout`
 
 #### `build`
 
@@ -39,7 +39,7 @@ On error, it should return a non-zero exit code.
 ##### Parameters
 
 - `root` (required) - the root directory that contains the static files to populate the database
-- `outfile-file` (required) - location of the file to write the populated database to
+- `output-file` (required) - location of the file to write the populated database to
 - `invalid` - optionally sets the behavior for a file that does not pass schema validation: `silent`, `warn`, `fail` (default)
 
 #### `serve`
@@ -63,7 +63,7 @@ The database is read only.
 ##### Parameters
 
 - `root` (required) - the root directory that contains the static files to populate the database
-- `outfile-file` (required) - location of the file to write the populated database to
+- `output-file` (required) - location of the file to write the populated database to
 - `invalid` - optionally sets the behavior for a file that does not pass schema validation: `silent`, `warn` (default), `fail`
 - `port` - the port to run the server on
 
