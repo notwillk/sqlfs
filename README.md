@@ -81,7 +81,7 @@ It specifies:
 
 ### Schema definition
 
-In the root of the static files directory, there is a file `schema.dbml` in (dbml)[https://dbml.dbdiagram.io/] format.
+In the root of the static files directory, there is a file `schema.dbml` in [dbml](https://dbml.dbdiagram.io/) format.
 
 #### Standard columns
 
