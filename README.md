@@ -27,7 +27,7 @@ On error, it should return a non-zero exit code.
 #### `build`
 
 1. Parse the `schema.dbml` and generate the SQL structure that corresponds to it.
-2. Iterates through all supported files (exlucing `schema.dbml` and `sqlfs.yaml`) in the root directory (and its decendants)
+2. Iterates through all supported files (excluding `schema.dbml` and `sqlfs.yaml`) in the root directory (and its descendants)
 
 - validate that it matches the schema
 - insert it into the database with appropriate foreign keys
@@ -46,7 +46,7 @@ On error, it should return a non-zero exit code.
 
 1. Watch all supported files (including `schema.dbml`) for changes, intelligently re-run the following as necessary
 2. Parse the `schema.dbml` and generate the SQL structure that corresponds to it.
-3. Iterates through all supported files (exlucing `schema.dbml` and `sqlfs.yaml`) in the root directory (and its decendants)
+3. Iterates through all supported files (excluding `schema.dbml` and `sqlfs.yaml`) in the root directory (and its descendants)
 
 - validate that it matches the schema
 - insert it into the database with appropriate foreign keys
@@ -81,15 +81,15 @@ It specifies:
 
 ### Schema definition
 
-In the root of the static files directory, there is a file `schema.dbml` in [dbml](https://dbml.dbdiagram.io/) format.
+In the root of the static files directory, there is a file `schema.dbml` in (dbml)[https://dbml.dbdiagram.io/] format.
 
 #### Standard columns
 
-In addition to all fields spcified in the `schema.dbml` file, the following fields are also added:
+In addition to all fields specified in the `schema.dbml` file, the following fields are also added:
 
 - `__path__` - is the relative path from the root of the static files directory for the file on which that row is based on
-- `__created_at__` - the filesystem's timestampf for when the file was created
-- `__modified_at__` - the filesystem's timestampf for when the file was modified
+- `__created_at__` - the filesystem's timestamp for when the file was created
+- `__modified_at__` - the filesystem's timestamp for when the file was modified
 - `__checksum__` - the md5 checksum of the file
 - `__ulid__` - a ULID that is unique for this file (and build) based on when the file was created
 
