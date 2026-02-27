@@ -103,7 +103,7 @@ Static files are in one of the following human readable formats:
 
 - YAML
 - TOML
-- JSON (with comments and trailing spaces, e.g. via HJSON / JSON5 )
+- JSON (with comments and trailing commas, e.g. via HJSON / JSON5 )
 - XML
 - plist
 
