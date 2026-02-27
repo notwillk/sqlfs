@@ -69,7 +69,7 @@ The database is read only.
 
 ### Config file
 
-In the root of the static files directory, there is an optional file `sqldb.yaml`.
+In the root of the static files directory, there is an optional file `sqlfs.yaml`.
 
 It specifies:
 
