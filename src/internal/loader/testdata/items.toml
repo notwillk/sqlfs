@@ -1,0 +1,9 @@
+[widget]
+name = "Widget A"
+price = 9.99
+in_stock = true
+
+[gadget]
+name = "Gadget B"
+price = 19.99
+in_stock = false

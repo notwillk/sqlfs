@@ -1,0 +1,14 @@
+// Config with comments and trailing commas
+{
+  dev: {
+    host: "localhost",
+    port: 5432,
+    // trailing comma below
+    debug: true,
+  },
+  prod: {
+    host: "db.example.com",
+    port: 5432,
+    debug: false,
+  },
+}
