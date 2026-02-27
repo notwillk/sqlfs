@@ -26,7 +26,7 @@ On error, it should return a non-zero exit code.
 
 #### `build`
 
-1. Parse the `schema.dbml` and generate a the SQL structure that corresponds.
+1. Parse the `schema.dbml` and generate the SQL structure that corresponds to it.
 2. Iterates through all supported files (exlucing `schema.dbml` and `sqlfs.yaml`) in the root directory (and its decendants)
 
 - validate that it matches the schema
@@ -45,7 +45,7 @@ On error, it should return a non-zero exit code.
 #### `serve`
 
 1. Watch all supported files (including `schema.dbml`) for changes, intelligently re-run the following as necessary
-2. Parse the `schema.dbml` and generate a the SQL structure that corresponds.
+2. Parse the `schema.dbml` and generate the SQL structure that corresponds to it.
 3. Iterates through all supported files (exlucing `schema.dbml` and `sqlfs.yaml`) in the root directory (and its decendants)
 
 - validate that it matches the schema
