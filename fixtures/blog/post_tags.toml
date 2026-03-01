@@ -1,0 +1,31 @@
+# post 1: Hello World → open-source
+[hello-world-open-source]
+post_id = 1
+tag_id = 3
+
+# post 2: sqlfs intro → databases, open-source
+[intro-sqlfs-databases]
+post_id = 2
+tag_id = 2
+
+[intro-sqlfs-open-source]
+post_id = 2
+tag_id = 3
+
+# post 3: Go Generics → go, tutorial
+[go-generics-go]
+post_id = 3
+tag_id = 1
+
+[go-generics-tutorial]
+post_id = 3
+tag_id = 4
+
+# post 4: SQLite Internals → databases, internals
+[sqlite-internals-databases]
+post_id = 4
+tag_id = 2
+
+[sqlite-internals-internals]
+post_id = 4
+tag_id = 5

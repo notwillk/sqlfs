@@ -1,0 +1,54 @@
+[platform-v2]
+id = 1
+name = "Platform v2 Rewrite"
+code = "ENG-001"
+description = "Full rewrite of the core data platform to support multi-tenancy and horizontal scaling."
+owner_id = 1
+department_id = 1
+status = "active"
+start_date = "2024-01-15"
+target_date = "2024-12-31"
+
+[data-pipeline]
+id = 2
+name = "Real-Time Data Pipeline"
+code = "DAT-001"
+description = "Build a streaming pipeline using Kafka and Flink to replace the nightly batch jobs."
+owner_id = 10
+department_id = 4
+status = "active"
+start_date = "2024-03-01"
+target_date = "2024-09-30"
+
+[design-system]
+id = 3
+name = "Design System 2.0"
+code = "DES-001"
+description = "Consolidate all UI components into a unified design system with Figma and Storybook integration."
+owner_id = 8
+department_id = 3
+status = "active"
+start_date = "2024-02-01"
+target_date = "2024-07-31"
+
+[mobile-app]
+id = 4
+name = "Mobile App MVP"
+code = "PRD-001"
+description = "Build the first version of the iOS and Android mobile app."
+owner_id = 5
+department_id = 2
+status = "planned"
+start_date = "2025-01-01"
+target_date = "2025-06-30"
+
+[legacy-migration]
+id = 5
+name = "Legacy System Migration"
+code = "ENG-002"
+description = "Migrate all data from the legacy Oracle database to the new platform."
+owner_id = 2
+department_id = 1
+status = "completed"
+start_date = "2023-06-01"
+target_date = "2024-01-31"

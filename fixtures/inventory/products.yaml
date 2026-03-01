@@ -1,0 +1,76 @@
+laptop-pro-14:
+  id: 1
+  sku: TC-LP14-SLV
+  name: ProBook Laptop 14"
+  description: Lightweight 14-inch laptop with 16 GB RAM and 512 GB SSD.
+  category_id: 2
+  supplier_id: 1
+  unit: each
+  unit_price: 1299.99
+  status: active
+
+usb-hub-7port:
+  id: 2
+  sku: GP-UH7-BLK
+  name: 7-Port USB-C Hub
+  description: Powered USB-C hub with 7 ports including HDMI and SD card reader.
+  category_id: 1
+  supplier_id: 2
+  unit: each
+  unit_price: 49.95
+  status: active
+
+studio-headphones:
+  id: 3
+  sku: TC-SH50-BLK
+  name: Studio Headphones 50
+  description: Over-ear studio monitor headphones, 50 mm drivers.
+  category_id: 3
+  supplier_id: 1
+  unit: each
+  unit_price: 179.00
+  status: active
+
+usb-microphone:
+  id: 4
+  sku: GP-UM1-BLK
+  name: USB Condenser Microphone
+  description: Cardioid condenser mic, plug-and-play USB.
+  category_id: 3
+  supplier_id: 2
+  unit: each
+  unit_price: 89.00
+  status: active
+
+premium-coffee:
+  id: 5
+  sku: FS-PC250-DRK
+  name: Premium Dark Roast Coffee
+  description: Single-origin Ethiopian dark roast, 250 g bag.
+  category_id: 5
+  supplier_id: 3
+  unit: kg
+  unit_price: 18.50
+  status: active
+
+sparkling-water:
+  id: 6
+  sku: FS-SW500-NAT
+  name: Sparkling Mineral Water
+  description: Natural sparkling mineral water, 500 ml glass bottle.
+  category_id: 5
+  supplier_id: 3
+  unit: litre
+  unit_price: 2.20
+  status: active
+
+old-keyboard:
+  id: 7
+  sku: OG-KB88-BRN
+  name: Mechanical Keyboard 88-Key
+  description: Vintage buckling-spring mechanical keyboard.
+  category_id: 1
+  supplier_id: 4
+  unit: each
+  unit_price: 69.00
+  status: discontinued

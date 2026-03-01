@@ -1,0 +1,67 @@
+Project team {
+  database_type: 'SQLite'
+  Note: 'Company org structure: employees, departments, projects, and assignments'
+}
+
+enum employment_type {
+  full_time
+  part_time
+  contractor
+}
+
+enum project_status {
+  planned
+  active
+  on_hold
+  completed
+  cancelled
+}
+
+enum seniority {
+  junior
+  mid
+  senior
+  staff
+  principal
+}
+
+Table departments {
+  id          integer [pk]
+  name        varchar [not null]
+  code        varchar [not null, unique]
+  head_id     integer [ref: > employees.id]
+  budget_usd  integer
+  location    varchar
+}
+
+Table employees {
+  id              integer         [pk]
+  name            varchar         [not null]
+  email           varchar         [not null, unique]
+  title           varchar         [not null]
+  seniority       seniority       [not null]
+  department_id   integer         [not null, ref: > departments.id]
+  manager_id      integer         [ref: > employees.id]
+  employment_type employment_type [not null, default: 'full_time']
+  start_date      varchar         [not null]
+  timezone        varchar
+}
+
+Table projects {
+  id             integer        [pk]
+  name           varchar        [not null]
+  code           varchar        [not null, unique]
+  description    text
+  owner_id       integer        [not null, ref: > employees.id]
+  department_id  integer        [ref: > departments.id]
+  status         project_status [not null, default: 'planned']
+  start_date     varchar
+  target_date    varchar
+}
+
+Table assignments {
+  employee_id  integer [not null, ref: > employees.id]
+  project_id   integer [not null, ref: > projects.id]
+  role         varchar [not null]
+  allocated_pct integer
+}

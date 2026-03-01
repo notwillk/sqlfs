@@ -1,0 +1,55 @@
+Project inventory {
+  database_type: 'SQLite'
+  Note: 'Product inventory with categories, suppliers, and stock levels'
+}
+
+enum product_status {
+  active
+  discontinued
+  out_of_stock
+}
+
+enum unit {
+  each
+  kg
+  litre
+  box
+}
+
+Table categories {
+  id          integer [pk]
+  name        varchar [not null]
+  slug        varchar [not null, unique]
+  description text
+  parent_id   integer [ref: > categories.id]
+}
+
+Table suppliers {
+  id           integer [pk]
+  name         varchar [not null]
+  contact_name varchar
+  email        varchar
+  phone        varchar
+  country      varchar [not null]
+  active       boolean [default: true]
+}
+
+Table products {
+  id          integer        [pk]
+  sku         varchar        [not null, unique]
+  name        varchar        [not null]
+  description text
+  category_id integer        [not null, ref: > categories.id]
+  supplier_id integer        [not null, ref: > suppliers.id]
+  unit        unit           [not null, default: 'each']
+  unit_price  real           [not null]
+  status      product_status [not null, default: 'active']
+}
+
+Table stock_levels {
+  product_id  integer [not null, ref: > products.id]
+  warehouse   varchar [not null]
+  quantity    integer [not null]
+  reorder_at  integer
+  updated_at  varchar
+}

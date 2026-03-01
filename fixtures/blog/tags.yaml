@@ -1,0 +1,29 @@
+go:
+  id: 1
+  name: Go
+  slug: go
+  color: "#00ADD8"
+
+databases:
+  id: 2
+  name: Databases
+  slug: databases
+  color: "#F29111"
+
+open-source:
+  id: 3
+  name: Open Source
+  slug: open-source
+  color: "#6CC644"
+
+tutorial:
+  id: 4
+  name: Tutorial
+  slug: tutorial
+  color: "#E34F26"
+
+internals:
+  id: 5
+  name: Internals
+  slug: internals
+  color: "#A371F7"
