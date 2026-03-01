@@ -1,0 +1,42 @@
+// Comments on blog posts
+{
+  comment-1: {
+    id: 1,
+    post_id: 1,
+    author_id: 4,
+    author_name: "Dave Kim",
+    body: "Great first post! Looking forward to more content.",
+    approved: true,
+  },
+  comment-2: {
+    id: 2,
+    post_id: 2,
+    author_id: 3,
+    author_name: "Carol Mendes",
+    body: "This is exactly what I needed for my side project. Does it support JSON Schema generation?",
+    approved: true,
+  },
+  comment-3: {
+    id: 3,
+    post_id: 2,
+    // Guest comment — no author_id
+    author_name: "Guest Reader",
+    body: "Really impressive project. Will there be MySQL support?",
+    approved: true,
+  },
+  comment-4: {
+    id: 4,
+    post_id: 3,
+    author_id: 4,
+    author_name: "Dave Kim",
+    body: "The generics section on type constraints was very clear.",
+    approved: true,
+  },
+  comment-5: {
+    id: 5,
+    post_id: 3,
+    author_name: "Anonymous",
+    body: "Buy cheap watches online!!!",
+    approved: false,
+  },
+}

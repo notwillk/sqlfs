@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Platform v2 team -->
+  <key>priya-platform</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>1</integer>
+    <key>project_id</key>
+    <integer>1</integer>
+    <key>role</key>
+    <string>Executive Sponsor</string>
+    <key>allocated_pct</key>
+    <integer>20</integer>
+  </dict>
+  <key>james-platform</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>2</integer>
+    <key>project_id</key>
+    <integer>1</integer>
+    <key>role</key>
+    <string>Tech Lead</string>
+    <key>allocated_pct</key>
+    <integer>80</integer>
+  </dict>
+  <key>fatima-platform</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>3</integer>
+    <key>project_id</key>
+    <integer>1</integer>
+    <key>role</key>
+    <string>Backend Engineer</string>
+    <key>allocated_pct</key>
+    <integer>100</integer>
+  </dict>
+  <key>carlos-platform</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>4</integer>
+    <key>project_id</key>
+    <integer>1</integer>
+    <key>role</key>
+    <string>Backend Engineer</string>
+    <key>allocated_pct</key>
+    <integer>100</integer>
+  </dict>
+  <!-- Data pipeline team -->
+  <key>yuna-pipeline</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>10</integer>
+    <key>project_id</key>
+    <integer>2</integer>
+    <key>role</key>
+    <string>Lead</string>
+    <key>allocated_pct</key>
+    <integer>60</integer>
+  </dict>
+  <key>tom-pipeline</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>11</integer>
+    <key>project_id</key>
+    <integer>2</integer>
+    <key>role</key>
+    <string>Data Engineer</string>
+    <key>allocated_pct</key>
+    <integer>100</integer>
+  </dict>
+  <!-- Design system team -->
+  <key>amara-design-system</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>8</integer>
+    <key>project_id</key>
+    <integer>3</integer>
+    <key>role</key>
+    <string>Design Lead</string>
+    <key>allocated_pct</key>
+    <integer>70</integer>
+  </dict>
+  <key>rafael-design-system</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>9</integer>
+    <key>project_id</key>
+    <integer>3</integer>
+    <key>role</key>
+    <string>Designer</string>
+    <key>allocated_pct</key>
+    <integer>100</integer>
+  </dict>
+  <!-- Mobile app planning -->
+  <key>sophie-mobile</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>5</integer>
+    <key>project_id</key>
+    <integer>4</integer>
+    <key>role</key>
+    <string>Product Owner</string>
+    <key>allocated_pct</key>
+    <integer>50</integer>
+  </dict>
+  <key>liang-mobile</key>
+  <dict>
+    <key>employee_id</key>
+    <integer>6</integer>
+    <key>project_id</key>
+    <integer>4</integer>
+    <key>role</key>
+    <string>Product Manager</string>
+    <key>allocated_pct</key>
+    <integer>80</integer>
+  </dict>
+</dict>
+</plist>

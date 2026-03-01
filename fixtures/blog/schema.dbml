@@ -1,0 +1,56 @@
+Project blog {
+  database_type: 'SQLite'
+  Note: 'A simple blog platform with users, posts, tags, and comments'
+}
+
+enum user_role {
+  admin
+  author
+  reader
+}
+
+enum post_status {
+  draft
+  published
+  archived
+}
+
+Table users {
+  id        integer  [pk]
+  name      varchar  [not null]
+  email     varchar  [not null, unique]
+  bio       text
+  role      user_role [not null, default: 'author']
+  joined_at varchar
+}
+
+Table posts {
+  id           integer     [pk]
+  title        varchar     [not null]
+  slug         varchar     [not null, unique]
+  body         text        [not null]
+  author_id    integer     [not null, ref: > users.id]
+  status       post_status [not null, default: 'draft']
+  published_at varchar
+}
+
+Table tags {
+  id    integer [pk]
+  name  varchar [not null]
+  slug  varchar [not null, unique]
+  color varchar
+}
+
+Table post_tags {
+  post_id integer [not null, ref: > posts.id]
+  tag_id  integer [not null, ref: > tags.id]
+}
+
+Table comments {
+  id          integer [pk]
+  post_id     integer [not null, ref: > posts.id]
+  author_id   integer [ref: > users.id]
+  author_name varchar
+  body        text    [not null]
+  approved    boolean [default: false]
+}

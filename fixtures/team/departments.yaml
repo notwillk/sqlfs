@@ -1,0 +1,31 @@
+engineering:
+  id: 1
+  name: Engineering
+  code: ENG
+  head_id: 1
+  budget_usd: 2000000
+  location: "San Francisco, CA"
+
+product:
+  id: 2
+  name: Product
+  code: PRD
+  head_id: 5
+  budget_usd: 800000
+  location: "San Francisco, CA"
+
+design:
+  id: 3
+  name: Design
+  code: DES
+  head_id: 8
+  budget_usd: 500000
+  location: "New York, NY"
+
+data:
+  id: 4
+  name: Data & Analytics
+  code: DAT
+  head_id: 10
+  budget_usd: 900000
+  location: "Remote"

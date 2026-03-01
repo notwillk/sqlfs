@@ -1,0 +1,34 @@
+[hello-world]
+id = 1
+title = "Hello, World!"
+slug = "hello-world"
+body = "Welcome to our new blog. We will be covering topics ranging from systems programming to database internals."
+author_id = 1
+status = "published"
+published_at = "2023-02-01"
+
+[intro-to-sqlfs]
+id = 2
+title = "Introducing sqlfs: Static Files as a Database"
+slug = "intro-to-sqlfs"
+body = "sqlfs lets you turn a directory of YAML, TOML, and JSON files into a queryable SQLite database served over the Postgres wire protocol."
+author_id = 2
+status = "published"
+published_at = "2023-04-10"
+
+[go-generics-deep-dive]
+id = 3
+title = "A Deep Dive into Go Generics"
+slug = "go-generics-deep-dive"
+body = "Go 1.18 introduced generics. In this post we explore the type parameter syntax, constraints, and practical patterns."
+author_id = 3
+status = "published"
+published_at = "2023-08-15"
+
+[sqlite-internals]
+id = 4
+title = "SQLite Internals: How the B-Tree Works"
+slug = "sqlite-internals"
+body = "A look at the page-based storage format and B-tree structure that underpins SQLite's fast reads."
+author_id = 1
+status = "draft"

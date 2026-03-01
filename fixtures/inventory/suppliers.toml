@@ -1,0 +1,34 @@
+[techcore]
+id = 1
+name = "TechCore Ltd."
+contact_name = "Yuki Tanaka"
+email = "yuki@techcore.example"
+phone = "+81-3-1234-5678"
+country = "Japan"
+active = true
+
+[globalparts]
+id = 2
+name = "GlobalParts Inc."
+contact_name = "Maria Santos"
+email = "msantos@globalparts.example"
+phone = "+1-800-555-0199"
+country = "USA"
+active = true
+
+[freshsource]
+id = 3
+name = "FreshSource GmbH"
+contact_name = "Lars Müller"
+email = "lars@freshsource.example"
+phone = "+49-30-9876-5432"
+country = "Germany"
+active = true
+
+[legacy-supplier]
+id = 4
+name = "OldGoods Co."
+contact_name = "Reginald Hatch"
+email = "reg@oldgoods.example"
+country = "UK"
+active = false
