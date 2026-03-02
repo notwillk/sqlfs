@@ -94,9 +94,12 @@ func recordKey(relPath string) string {
 
 // flattenValue converts nested structures to JSON strings for flat storage.
 // Scalars (string, int, float, bool, nil) are returned as-is.
+// uint64 is included because plist unmarshals integers as uint64.
 func flattenValue(v any) any {
 	switch v.(type) {
-	case string, int, int64, float64, bool, nil:
+	case string, int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64,
+		float32, float64, bool, nil:
 		return v
 	default:
 		b, err := json.Marshal(v)
@@ -137,7 +140,7 @@ func readFile(absPath, relPath string) ([]byte, *FileRecord, error) {
 }
 
 // buildRecord creates a single Record from a flat field map.
-// key is the filename stem; all map values are flattened to scalar-or-JSON-string.
+// key is the filename stem; scalar values are kept as-is and nested structures are flattened to JSON strings.
 func buildRecord(key string, m map[string]any) Record {
 	fields := make(map[string]any, len(m))
 	for k, v := range m {

@@ -38,7 +38,7 @@ func Generate(schema *dbml.Schema, cfg *config.Config) ([]byte, error) {
 	}
 
 	doc := map[string]any{
-		"$schema":     "https://json-schema.org/draft/2020-12",
+		"$schema":     "https://json-schema.org/draft/2020-12/schema",
 		"title":       "sqlfs data files",
 		"description": "Validates data files for your sqlfs project",
 		"$defs":       defs,
@@ -153,7 +153,7 @@ func dbmlTypeToJSONSchema(typeName string) (schemaType, format string) {
 // GenerateConfigSchema generates a JSON Schema for the sqlfs.yaml config file.
 func GenerateConfigSchema() ([]byte, error) {
 	doc := map[string]any{
-		"$schema":     "https://json-schema.org/draft/2020-12",
+		"$schema":     "https://json-schema.org/draft/2020-12/schema",
 		"title":       "sqlfs configuration",
 		"description": "Configuration file for sqlfs (sqlfs.yaml)",
 		"type":        "object",
