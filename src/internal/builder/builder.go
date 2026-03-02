@@ -39,9 +39,8 @@ type Result struct {
 // Build executes the full build pipeline:
 // 1. Parse schema.dbml
 // 2. Create SQLite schema
-// 3. Walk root directory, load and validate each file
-// 4. Insert records with standard columns
-// 5. Write output database
+// 3. Walk root directory, load each file, duck-type its table, validate, insert
+// 4. Write output database
 func Build(ctx context.Context, opts Options) (*Result, error) {
 	start := time.Now()
 	result := &Result{}
@@ -83,6 +82,7 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 	// Set up file registry and validator.
 	reg := loader.NewRegistry()
 	val := validator.New(dbmlSchema, cfg)
+	stdCols := cfg.StandardColumnNames()
 
 	// Track tables that have been populated.
 	tablesSeen := make(map[string]struct{})
@@ -126,6 +126,18 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 			return fmt.Errorf("loading %q: %w", relPath, err)
 		}
 
+		if len(fr.Records) == 0 {
+			return nil
+		}
+
+		// Duck-type: determine which schema table this entity belongs to.
+		matched := matchTable(dbmlSchema.Tables, fr.Records[0].Fields, stdCols)
+		if matched == nil {
+			log.Printf("warning: skipping %q: fields do not match any schema table", relPath)
+			return nil
+		}
+		fr.TableName = matched.Name
+
 		// Validate records.
 		valid, warns, err := val.Validate(fr)
 		if err != nil {
@@ -166,6 +178,40 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 	return result, nil
 }
 
+// matchTable finds the schema table whose columns best match the given fields.
+// Standard column names are excluded from matching.
+// Returns nil if no table has any matching columns.
+func matchTable(tables []*dbml.Table, fields map[string]any, stdCols map[string]struct{}) *dbml.Table {
+	fieldSet := make(map[string]struct{}, len(fields))
+	for k := range fields {
+		if _, isStd := stdCols[strings.ToLower(k)]; !isStd {
+			fieldSet[strings.ToLower(k)] = struct{}{}
+		}
+	}
+
+	var best *dbml.Table
+	bestScore := -1
+
+	for _, t := range tables {
+		score := 0
+		for _, col := range t.Columns {
+			if _, ok := fieldSet[strings.ToLower(col.Name)]; ok {
+				score++
+			}
+		}
+		// Prefer higher score; break ties alphabetically for determinism.
+		if score > bestScore || (score == bestScore && best != nil && t.Name < best.Name) {
+			bestScore = score
+			best = t
+		}
+	}
+
+	if bestScore <= 0 {
+		return nil
+	}
+	return best
+}
+
 // insertRecord inserts a single record into the SQLite database.
 func insertRecord(db *sqlite.DB, fr *loader.FileRecord, rec loader.Record, cfg *config.Config) error {
 	sc := cfg.StandardColumns
@@ -199,7 +245,6 @@ func insertRecord(db *sqlite.DB, fr *loader.FileRecord, rec loader.Record, cfg *
 	)
 
 	if err := db.InsertRecord(fr.TableName, cols, vals); err != nil {
-		// Log the error and handle based on table existence.
 		log.Printf("warning: insert error for %s#%s: %v", fr.FilePath, rec.Key, err)
 		return err
 	}

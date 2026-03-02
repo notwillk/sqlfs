@@ -29,10 +29,9 @@ func (HJSONLoader) Load(absPath, relPath string) (*FileRecord, error) {
 
 	m, ok := raw.(map[string]any)
 	if !ok {
-		// If not a map, wrap in a single record.
-		m = map[string]any{"root": raw}
+		m = map[string]any{"value": raw}
 	}
 
-	fr.Records = buildRecords(m)
+	fr.Records = []Record{buildRecord(recordKey(relPath), m)}
 	return fr, nil
 }

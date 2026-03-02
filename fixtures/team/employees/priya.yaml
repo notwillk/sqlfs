@@ -1,0 +1,9 @@
+id: 1
+name: Priya Patel
+email: priya@company.example
+title: VP of Engineering
+seniority: principal
+department_id: 1
+employment_type: full_time
+start_date: "2019-06-01"
+timezone: America/Los_Angeles

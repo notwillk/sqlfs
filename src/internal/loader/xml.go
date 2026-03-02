@@ -24,12 +24,12 @@ func (XMLLoader) Load(absPath, relPath string) (*FileRecord, error) {
 		return nil, err
 	}
 
-	fr.Records = buildRecords(m)
+	fr.Records = []Record{buildRecord(recordKey(relPath), m)}
 	return fr, nil
 }
 
-// parseXML parses XML bytes into a map[string]any suitable for buildRecords.
-// The root element is unwrapped; its children become top-level keys.
+// parseXML parses XML bytes into a map[string]any suitable for buildRecord.
+// The root element is unwrapped; its children become the field map.
 func parseXML(data []byte) (map[string]any, error) {
 	decoder := xml.NewDecoder(strings.NewReader(string(data)))
 	// Skip the root element and parse its children as top-level keys.

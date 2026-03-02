@@ -21,7 +21,7 @@ func (TOMLLoader) Load(absPath, relPath string) (*FileRecord, error) {
 	}
 
 	// TOML Unmarshal returns int64/float64 etc — convert to consistent types.
-	fr.Records = buildRecords(normaliseMap(raw))
+	fr.Records = []Record{buildRecord(recordKey(relPath), normaliseMap(raw))}
 	return fr, nil
 }
 

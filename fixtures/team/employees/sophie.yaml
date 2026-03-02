@@ -1,0 +1,9 @@
+id: 5
+name: Sophie Bergmann
+email: sophie@company.example
+title: Head of Product
+seniority: principal
+department_id: 2
+employment_type: full_time
+start_date: "2020-01-20"
+timezone: Europe/Berlin

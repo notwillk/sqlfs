@@ -1,0 +1,9 @@
+id = 1
+name = "Platform v2 Rewrite"
+code = "ENG-001"
+description = "Full rewrite of the core data platform to support multi-tenancy and horizontal scaling."
+owner_id = 1
+department_id = 1
+status = "active"
+start_date = "2024-01-15"
+target_date = "2024-12-31"

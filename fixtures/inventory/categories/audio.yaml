@@ -1,0 +1,5 @@
+id: 3
+name: Audio
+slug: audio
+description: Headphones, speakers, and microphones.
+parent_id: 1

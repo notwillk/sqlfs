@@ -1,0 +1,9 @@
+id = 3
+name = "Mobile App MVP"
+code = "PRD-001"
+description = "Build the first version of the iOS and Android mobile app."
+owner_id = 5
+department_id = 2
+status = "planned"
+start_date = "2025-01-01"
+target_date = "2025-06-30"

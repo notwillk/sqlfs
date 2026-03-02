@@ -1,0 +1,7 @@
+id = 2
+title = "Introducing sqlfs: Static Files as a Database"
+slug = "intro-to-sqlfs"
+body = "sqlfs lets you turn a directory of YAML, TOML, and JSON files into a queryable SQLite database served over the Postgres wire protocol."
+author_id = 2
+status = "published"
+published_at = "2023-04-10"

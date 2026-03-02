@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<catalog>
-  <book>
-    <title>Go Programming</title>
-    <author>John Doe</author>
-    <price>29.99</price>
-  </book>
-  <magazine>
-    <title>Tech Today</title>
-    <author>Jane Smith</author>
-    <price>9.99</price>
-  </magazine>
-</catalog>
+<entry>
+  <title>Go Programming</title>
+  <author>John Doe</author>
+  <price>29.99</price>
+</entry>

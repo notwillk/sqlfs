@@ -1,0 +1,7 @@
+id = 1
+title = "Hello, World!"
+slug = "hello-world"
+body = "Welcome to our new blog. We will be covering topics ranging from systems programming to database internals."
+author_id = 1
+status = "published"
+published_at = "2023-02-01"

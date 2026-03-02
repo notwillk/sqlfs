@@ -1,0 +1,7 @@
+id = 3
+name = "FreshSource GmbH"
+contact_name = "Lars Müller"
+email = "lars@freshsource.example"
+phone = "+49-30-9876-5432"
+country = "Germany"
+active = true

@@ -1,0 +1,9 @@
+id = 2
+name = "Design System 2.0"
+code = "DES-001"
+description = "Consolidate all UI components into a unified design system with Figma and Storybook integration."
+owner_id = 7
+department_id = 3
+status = "active"
+start_date = "2024-02-01"
+target_date = "2024-07-31"

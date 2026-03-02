@@ -2,19 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>dark_mode</key>
-  <dict>
-    <key>enabled</key>
-    <true/>
-    <key>theme</key>
-    <string>system</string>
-  </dict>
-  <key>notifications</key>
-  <dict>
-    <key>enabled</key>
-    <false/>
-    <key>sound</key>
-    <string>chime</string>
-  </dict>
+  <key>enabled</key>
+  <true/>
+  <key>theme</key>
+  <string>system</string>
 </dict>
 </plist>

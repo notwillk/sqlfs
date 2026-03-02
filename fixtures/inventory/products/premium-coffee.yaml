@@ -1,0 +1,9 @@
+id: 4
+sku: FS-PC250-DRK
+name: Premium Dark Roast Coffee
+description: Single-origin Ethiopian dark roast, 250 g bag.
+category_id: 4
+supplier_id: 3
+unit: kg
+unit_price: 18.50
+status: active
