@@ -1,14 +1,7 @@
-// Config with comments and trailing commas
+// A single environment config entry (comments and trailing commas are supported)
 {
-  dev: {
-    host: "localhost",
-    port: 5432,
-    // trailing comma below
-    debug: true,
-  },
-  prod: {
-    host: "db.example.com",
-    port: 5432,
-    debug: false,
-  },
+  host: "localhost",
+  port: 5432,
+  // debug is enabled in dev
+  debug: true,
 }

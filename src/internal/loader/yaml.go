@@ -20,6 +20,6 @@ func (YAMLLoader) Load(absPath, relPath string) (*FileRecord, error) {
 		return nil, err
 	}
 
-	fr.Records = buildRecords(raw)
+	fr.Records = []Record{buildRecord(recordKey(relPath), raw)}
 	return fr, nil
 }

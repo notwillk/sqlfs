@@ -11,13 +11,14 @@ import (
 )
 
 // Record is a single row loaded from a source file.
-// Key is the top-level key in the file; Fields maps column names to values.
+// Key is the filename stem; Fields maps column names to values.
 type Record struct {
 	Key    string
 	Fields map[string]any
 }
 
 // FileRecord is the result of loading one static file.
+// TableName is left empty by loaders; the builder sets it via duck-typing.
 type FileRecord struct {
 	TableName string
 	FilePath  string // relative path from root
@@ -31,7 +32,7 @@ type FileRecord struct {
 type Loader interface {
 	// Extensions returns the file extensions this loader handles (lowercase, with dot).
 	Extensions() []string
-	// Load parses a file and returns its records.
+	// Load parses a file and returns its single record.
 	Load(absPath, relPath string) (*FileRecord, error)
 }
 
@@ -84,8 +85,8 @@ func (r *Registry) LoadFile(absPath, relPath string) (*FileRecord, error) {
 	return l.Load(absPath, relPath)
 }
 
-// tableName derives the table name from a file's relative path (filename stem).
-func tableName(relPath string) string {
+// recordKey derives the record key from a file's relative path (filename stem).
+func recordKey(relPath string) string {
 	base := filepath.Base(relPath)
 	ext := filepath.Ext(base)
 	return strings.TrimSuffix(base, ext)
@@ -114,6 +115,7 @@ func rawBytesChecksum(data []byte) string {
 }
 
 // readFile reads a file and returns its bytes plus metadata.
+// TableName is left empty; the builder sets it via duck-typing.
 func readFile(absPath, relPath string) ([]byte, *FileRecord, error) {
 	data, err := os.ReadFile(absPath)
 	if err != nil {
@@ -126,7 +128,6 @@ func readFile(absPath, relPath string) ([]byte, *FileRecord, error) {
 	}
 
 	fr := &FileRecord{
-		TableName: tableName(relPath),
 		FilePath:  relPath,
 		ModTime:   info.ModTime(),
 		CreatedAt: fileCreatedAt(info, absPath),
@@ -135,20 +136,12 @@ func readFile(absPath, relPath string) ([]byte, *FileRecord, error) {
 	return data, fr, nil
 }
 
-// buildRecords converts a top-level map to []Record.
-// Each top-level key becomes one Record; nested values are flattened.
-func buildRecords(m map[string]any) []Record {
-	records := make([]Record, 0, len(m))
-	for key, val := range m {
-		fields := make(map[string]any)
-		if nested, ok := val.(map[string]any); ok {
-			for k, v := range nested {
-				fields[k] = flattenValue(v)
-			}
-		} else {
-			fields["value"] = flattenValue(val)
-		}
-		records = append(records, Record{Key: key, Fields: fields})
+// buildRecord creates a single Record from a flat field map.
+// key is the filename stem; all map values are flattened to scalar-or-JSON-string.
+func buildRecord(key string, m map[string]any) Record {
+	fields := make(map[string]any, len(m))
+	for k, v := range m {
+		fields[k] = flattenValue(v)
 	}
-	return records
+	return Record{Key: key, Fields: fields}
 }

@@ -1,0 +1,6 @@
+id = 4
+title = "SQLite Internals: How the B-Tree Works"
+slug = "sqlite-internals"
+body = "A look at the page-based storage format and B-tree structure that underpins SQLite's fast reads."
+author_id = 1
+status = "draft"

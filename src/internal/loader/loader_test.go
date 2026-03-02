@@ -9,72 +9,60 @@ func absPath(name string) string {
 	return filepath.Join("testdata", name)
 }
 
-func relPath(name string) string { return name }
-
 func TestYAMLLoader(t *testing.T) {
 	l := &YAMLLoader{}
 	if exts := l.Extensions(); len(exts) == 0 {
 		t.Fatal("no extensions")
 	}
 
-	fr, err := l.Load(absPath("users.yaml"), "users.yaml")
+	fr, err := l.Load(absPath("alice.yaml"), "alice.yaml")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if fr.TableName != "users" {
-		t.Errorf("TableName = %q, want users", fr.TableName)
+	// TableName is set by the builder via duck-typing, not by the loader.
+	if fr.TableName != "" {
+		t.Errorf("TableName = %q, want empty (set by builder)", fr.TableName)
 	}
-	if len(fr.Records) != 2 {
-		t.Fatalf("expected 2 records, got %d", len(fr.Records))
+	if len(fr.Records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fr.Records))
 	}
 	if fr.Checksum == "" {
 		t.Error("expected non-empty checksum")
 	}
 
-	// Find alice record.
-	var alice *Record
-	for i := range fr.Records {
-		if fr.Records[i].Key == "alice" {
-			alice = &fr.Records[i]
-		}
+	rec := fr.Records[0]
+	if rec.Key != "alice" {
+		t.Errorf("Key = %q, want alice", rec.Key)
 	}
-	if alice == nil {
-		t.Fatal("alice record not found")
+	if rec.Fields["name"] != "Alice Smith" {
+		t.Errorf("name = %v, want Alice Smith", rec.Fields["name"])
 	}
-	if alice.Fields["name"] != "Alice Smith" {
-		t.Errorf("alice.name = %v, want Alice Smith", alice.Fields["name"])
-	}
-	if alice.Fields["active"] != true {
-		t.Errorf("alice.active = %v, want true", alice.Fields["active"])
+	if rec.Fields["active"] != true {
+		t.Errorf("active = %v, want true", rec.Fields["active"])
 	}
 }
 
 func TestTOMLLoader(t *testing.T) {
 	l := &TOMLLoader{}
-	fr, err := l.Load(absPath("items.toml"), "items.toml")
+	fr, err := l.Load(absPath("widget.toml"), "widget.toml")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if fr.TableName != "items" {
-		t.Errorf("TableName = %q, want items", fr.TableName)
+	if fr.TableName != "" {
+		t.Errorf("TableName = %q, want empty (set by builder)", fr.TableName)
 	}
-	if len(fr.Records) != 2 {
-		t.Fatalf("expected 2 records, got %d", len(fr.Records))
+	if len(fr.Records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fr.Records))
 	}
 
-	var widget *Record
-	for i := range fr.Records {
-		if fr.Records[i].Key == "widget" {
-			widget = &fr.Records[i]
-		}
+	rec := fr.Records[0]
+	if rec.Key != "widget" {
+		t.Errorf("Key = %q, want widget", rec.Key)
 	}
-	if widget == nil {
-		t.Fatal("widget record not found")
-	}
-	if widget.Fields["name"] != "Widget A" {
-		t.Errorf("widget.name = %v", widget.Fields["name"])
+	if rec.Fields["name"] != "Widget A" {
+		t.Errorf("name = %v, want Widget A", rec.Fields["name"])
 	}
 }
 
@@ -85,11 +73,19 @@ func TestHJSONLoader(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if fr.TableName != "config" {
-		t.Errorf("TableName = %q, want config", fr.TableName)
+	if fr.TableName != "" {
+		t.Errorf("TableName = %q, want empty (set by builder)", fr.TableName)
 	}
-	if len(fr.Records) != 2 {
-		t.Fatalf("expected 2 records, got %d", len(fr.Records))
+	if len(fr.Records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fr.Records))
+	}
+
+	rec := fr.Records[0]
+	if rec.Key != "config" {
+		t.Errorf("Key = %q, want config", rec.Key)
+	}
+	if rec.Fields["host"] != "localhost" {
+		t.Errorf("host = %v, want localhost", rec.Fields["host"])
 	}
 }
 
@@ -100,11 +96,19 @@ func TestXMLLoader(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if fr.TableName != "catalog" {
-		t.Errorf("TableName = %q, want catalog", fr.TableName)
+	if fr.TableName != "" {
+		t.Errorf("TableName = %q, want empty (set by builder)", fr.TableName)
 	}
-	if len(fr.Records) != 2 {
-		t.Fatalf("expected 2 records, got %d; records: %+v", len(fr.Records), fr.Records)
+	if len(fr.Records) != 1 {
+		t.Fatalf("expected 1 record, got %d; records: %+v", len(fr.Records), fr.Records)
+	}
+
+	rec := fr.Records[0]
+	if rec.Key != "catalog" {
+		t.Errorf("Key = %q, want catalog", rec.Key)
+	}
+	if rec.Fields["title"] != "Go Programming" {
+		t.Errorf("title = %v, want Go Programming", rec.Fields["title"])
 	}
 }
 
@@ -115,11 +119,19 @@ func TestPlistLoader(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if fr.TableName != "settings" {
-		t.Errorf("TableName = %q, want settings", fr.TableName)
+	if fr.TableName != "" {
+		t.Errorf("TableName = %q, want empty (set by builder)", fr.TableName)
 	}
-	if len(fr.Records) != 2 {
-		t.Fatalf("expected 2 records, got %d", len(fr.Records))
+	if len(fr.Records) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(fr.Records))
+	}
+
+	rec := fr.Records[0]
+	if rec.Key != "settings" {
+		t.Errorf("Key = %q, want settings", rec.Key)
+	}
+	if rec.Fields["theme"] != "system" {
+		t.Errorf("theme = %v, want system", rec.Fields["theme"])
 	}
 }
 
@@ -127,11 +139,11 @@ func TestRegistry_Dispatch(t *testing.T) {
 	reg := NewRegistry()
 
 	tests := []struct {
-		file      string
-		wantTable string
+		file    string
+		wantKey string
 	}{
-		{"users.yaml", "users"},
-		{"items.toml", "items"},
+		{"alice.yaml", "alice"},
+		{"widget.toml", "widget"},
 		{"config.json", "config"},
 		{"catalog.xml", "catalog"},
 		{"settings.plist", "settings"},
@@ -142,8 +154,15 @@ func TestRegistry_Dispatch(t *testing.T) {
 			if err != nil {
 				t.Fatalf("LoadFile(%q): %v", tt.file, err)
 			}
-			if fr.TableName != tt.wantTable {
-				t.Errorf("TableName = %q, want %q", fr.TableName, tt.wantTable)
+			// TableName is empty; the builder sets it via duck-typing.
+			if fr.TableName != "" {
+				t.Errorf("TableName = %q, want empty", fr.TableName)
+			}
+			if len(fr.Records) != 1 {
+				t.Fatalf("expected 1 record, got %d", len(fr.Records))
+			}
+			if fr.Records[0].Key != tt.wantKey {
+				t.Errorf("Key = %q, want %q", fr.Records[0].Key, tt.wantKey)
 			}
 		})
 	}
@@ -195,20 +214,20 @@ func TestFlattenValue(t *testing.T) {
 	}
 }
 
-func TestTableName(t *testing.T) {
+func TestRecordKey(t *testing.T) {
 	tests := []struct {
 		path string
 		want string
 	}{
-		{"users.yaml", "users"},
-		{"sub/users.yaml", "users"},
+		{"alice.yaml", "alice"},
+		{"users/alice.yaml", "alice"},
 		{"config.json", "config"},
-		{"data.toml", "data"},
+		{"widget.toml", "widget"},
 	}
 	for _, tt := range tests {
-		got := tableName(tt.path)
+		got := recordKey(tt.path)
 		if got != tt.want {
-			t.Errorf("tableName(%q) = %q, want %q", tt.path, got, tt.want)
+			t.Errorf("recordKey(%q) = %q, want %q", tt.path, got, tt.want)
 		}
 	}
 }

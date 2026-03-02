@@ -1,0 +1,7 @@
+id = 1
+name = "TechCore Ltd."
+contact_name = "Yuki Tanaka"
+email = "yuki@techcore.example"
+phone = "+81-3-1234-5678"
+country = "Japan"
+active = true

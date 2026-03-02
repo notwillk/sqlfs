@@ -1,0 +1,7 @@
+id = 3
+title = "A Deep Dive into Go Generics"
+slug = "go-generics-deep-dive"
+body = "Go 1.18 introduced generics. In this post we explore the type parameter syntax, constraints, and practical patterns."
+author_id = 3
+status = "published"
+published_at = "2023-08-15"

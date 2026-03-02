@@ -1,0 +1,10 @@
+id: 2
+name: James Okoye
+email: james@company.example
+title: Staff Software Engineer
+seniority: staff
+department_id: 1
+manager_id: 1
+employment_type: full_time
+start_date: "2020-03-15"
+timezone: America/Los_Angeles

@@ -10,6 +10,7 @@ import (
 	"github.com/notwillk/sqlfs/internal/sqlite"
 )
 
+// setupTestDir creates a temp dir with a users schema and two single-entity files.
 func setupTestDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -25,18 +26,13 @@ Table users {
 		t.Fatal(err)
 	}
 
-	users := `
-alice:
-  id: 1
-  name: Alice Smith
-  email: alice@example.com
-
-bob:
-  id: 2
-  name: Bob Jones
-  email: bob@example.com
-`
-	if err := os.WriteFile(filepath.Join(dir, "users.yaml"), []byte(users), 0644); err != nil {
+	// Each file is a single entity; fields are matched to the users table by duck-typing.
+	alice := "id: 1\nname: Alice Smith\nemail: alice@example.com\n"
+	bob := "id: 2\nname: Bob Jones\nemail: bob@example.com\n"
+	if err := os.WriteFile(filepath.Join(dir, "alice.yaml"), []byte(alice), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "bob.yaml"), []byte(bob), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -143,8 +139,8 @@ func TestBuild_SkipsSchemaAndConfig(t *testing.T) {
 	// sqlfs.yaml and schema.dbml should be skipped.
 	os.WriteFile(filepath.Join(dir, "sqlfs.yaml"), []byte("port: 9999"), 0644)
 
-	// Also add a real data file.
-	os.WriteFile(filepath.Join(dir, "t.yaml"), []byte("rec1:\n  id: 1"), 0644)
+	// A single-entity data file — id matches column in table t.
+	os.WriteFile(filepath.Join(dir, "rec.yaml"), []byte("id: 1\n"), 0644)
 
 	outFile := filepath.Join(t.TempDir(), "test.db")
 	result, err := Build(context.Background(), Options{
@@ -173,8 +169,11 @@ Table posts {
 }
 `
 	os.WriteFile(filepath.Join(dir, "schema.dbml"), []byte(schema), 0644)
-	os.WriteFile(filepath.Join(dir, "users.yaml"), []byte("u1:\n  id: 1\n  name: Alice"), 0644)
-	os.WriteFile(filepath.Join(dir, "posts.yaml"), []byte("p1:\n  id: 1\n  title: Hello\np2:\n  id: 2\n  title: World"), 0644)
+
+	// One user, two posts — each in its own file.
+	os.WriteFile(filepath.Join(dir, "alice.yaml"), []byte("id: 1\nname: Alice\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "hello.yaml"), []byte("id: 1\ntitle: Hello\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "world.yaml"), []byte("id: 2\ntitle: World\n"), 0644)
 
 	outFile := filepath.Join(t.TempDir(), "test.db")
 	result, err := Build(context.Background(), Options{

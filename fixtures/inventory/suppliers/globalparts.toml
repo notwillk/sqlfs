@@ -1,0 +1,7 @@
+id = 2
+name = "GlobalParts Inc."
+contact_name = "Maria Santos"
+email = "msantos@globalparts.example"
+phone = "+1-800-555-0199"
+country = "USA"
+active = true
