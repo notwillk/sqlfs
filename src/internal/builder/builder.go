@@ -228,15 +228,13 @@ func (t *discoveredTable) addColumn(col string) {
 	}
 }
 
-func buildSchemaless(ctx context.Context, opts Options, cfg *config.Config, start time.Time) (*Result, error) {
-	result := &Result{}
-	reg := loader.NewRegistry()
-
-	// --- Discovery pass ---
+// discoverTables walks rootDir and collects the table/column structure from
+// entity files. Returns the table map and a pk→entityType index.
+func discoverTables(rootDir string, cfg *config.Config, reg *loader.Registry) (map[string]*discoveredTable, map[string]string, error) {
 	tables := make(map[string]*discoveredTable)
-	pathIndex := make(map[string]string) // pk → entity type
+	pathIndex := make(map[string]string)
 
-	if err := filepath.WalkDir(opts.RootDir, func(path string, d fs.DirEntry, walkErr error) error {
+	err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -254,7 +252,7 @@ func buildSchemaless(ctx context.Context, opts Options, cfg *config.Config, star
 			return nil
 		}
 
-		relPath, err := filepath.Rel(opts.RootDir, path)
+		relPath, err := filepath.Rel(rootDir, path)
 		if err != nil {
 			return err
 		}
@@ -275,7 +273,17 @@ func buildSchemaless(ctx context.Context, opts Options, cfg *config.Config, star
 			discoverColumns(entityType, fr.Records[0].Fields, tables, pathIndex)
 		}
 		return nil
-	}); err != nil {
+	})
+	return tables, pathIndex, err
+}
+
+func buildSchemaless(ctx context.Context, opts Options, cfg *config.Config, start time.Time) (*Result, error) {
+	result := &Result{}
+	reg := loader.NewRegistry()
+
+	// --- Discovery pass ---
+	tables, pathIndex, err := discoverTables(opts.RootDir, cfg, reg)
+	if err != nil {
 		return nil, err
 	}
 

@@ -8,6 +8,68 @@ import (
 	"github.com/notwillk/sqlfs/internal/dbml"
 )
 
+// GenerateFromColumns creates a JSON Schema document from a plain map of
+// table → column names (used for schema-less / inferred fixtures).
+// All columns are typed as string since no type information is available.
+func GenerateFromColumns(tables map[string][]string, cfg *config.Config) ([]byte, error) {
+	stdCols := cfg.StandardColumnNames()
+	defs := make(map[string]any)
+	var oneOf []any
+
+	// Stable ordering comes from the caller; iterate in provided order.
+	for _, name := range sortedKeys(tables) {
+		cols := tables[name]
+		fileKey := name + "_file"
+		rowKey := name + "_row"
+
+		properties := make(map[string]any)
+		for _, col := range cols {
+			if _, isStd := stdCols[col]; isStd {
+				continue
+			}
+			properties[col] = map[string]any{"type": "string"}
+		}
+
+		defs[fileKey] = map[string]any{
+			"type":                 "object",
+			"title":                name,
+			"description":          "Matches files named " + name + ".*",
+			"additionalProperties": map[string]any{"$ref": "#/$defs/" + rowKey},
+		}
+		defs[rowKey] = map[string]any{
+			"type":                 "object",
+			"properties":           properties,
+			"additionalProperties": false,
+		}
+		oneOf = append(oneOf, map[string]any{"$ref": "#/$defs/" + fileKey})
+	}
+
+	doc := map[string]any{
+		"$schema":     "https://json-schema.org/draft/2020-12/schema",
+		"title":       "sqlfs data files",
+		"description": "Validates data files for your sqlfs project",
+		"$defs":       defs,
+	}
+	if len(oneOf) > 0 {
+		doc["oneOf"] = oneOf
+	}
+	return json.MarshalIndent(doc, "", "  ")
+}
+
+func sortedKeys(m map[string][]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	// simple insertion sort — table counts are small
+	for i := 1; i < len(keys); i++ {
+		for j := i; j > 0 && keys[j] < keys[j-1]; j-- {
+			keys[j], keys[j-1] = keys[j-1], keys[j]
+		}
+	}
+	return keys
+}
+
 // Generate creates a JSON Schema document from a DBML schema.
 // Standard columns are excluded from the output.
 // Returns the JSON bytes.

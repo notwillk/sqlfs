@@ -29,7 +29,7 @@ validated against a DBML schema.`,
 
 func init() {
 	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print version and exit")
-	rootCmd.AddCommand(buildCmd, serveCmd, jsonSchemaCmd, configSchemaCmd)
+	rootCmd.AddCommand(buildCmd, serveCmd, jsonSchemaCmd, configSchemaCmd, generateSchemaCmd)
 }
 
 // Execute runs the root cobra command and returns an exit code.

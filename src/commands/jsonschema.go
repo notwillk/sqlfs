@@ -1,11 +1,13 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/notwillk/sqlfs/internal/builder"
 	"github.com/notwillk/sqlfs/internal/config"
 	"github.com/notwillk/sqlfs/internal/dbml"
 	"github.com/notwillk/sqlfs/internal/jsonschema"
@@ -34,15 +36,28 @@ func runJSONSchema(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("loading config: %w", err)
 	}
 
-	schemaPath := rootDir + "/" + cfg.SchemaFile
-	schema, err := dbml.ParseFile(schemaPath)
-	if err != nil {
-		return fmt.Errorf("parsing schema: %w", err)
-	}
+	var data []byte
 
-	data, err := jsonschema.Generate(schema, cfg)
-	if err != nil {
-		return fmt.Errorf("generating JSON schema: %w", err)
+	schemaPath := rootDir + "/" + cfg.SchemaFile
+	if _, statErr := os.Stat(schemaPath); errors.Is(statErr, os.ErrNotExist) {
+		// Schema-less mode: infer structure from entity files.
+		cols, err := builder.DiscoverColumnMap(rootDir, cfg)
+		if err != nil {
+			return fmt.Errorf("discovering schema: %w", err)
+		}
+		data, err = jsonschema.GenerateFromColumns(cols, cfg)
+		if err != nil {
+			return fmt.Errorf("generating JSON schema: %w", err)
+		}
+	} else {
+		schema, err := dbml.ParseFile(schemaPath)
+		if err != nil {
+			return fmt.Errorf("parsing schema: %w", err)
+		}
+		data, err = jsonschema.Generate(schema, cfg)
+		if err != nil {
+			return fmt.Errorf("generating JSON schema: %w", err)
+		}
 	}
 
 	if jsonSchemaOutputFile != "" {
