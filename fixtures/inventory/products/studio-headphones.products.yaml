@@ -1,9 +1,8 @@
-id: 3
 sku: TC-SH50-BLK
 name: Studio Headphones 50
 description: Over-ear studio monitor headphones, 50 mm drivers.
-category_id: 3
-supplier_id: 1
+category_pk: categories/audio
+supplier_pk: suppliers/techcore
 unit: each
 unit_price: 179.00
 status: active

@@ -2,12 +2,15 @@ package builder
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,16 +39,13 @@ type Result struct {
 	Duration     time.Duration
 }
 
-// Build executes the full build pipeline:
-// 1. Parse schema.dbml
-// 2. Create SQLite schema
-// 3. Walk root directory, load each file, duck-type its table, validate, insert
-// 4. Write output database
+// Build executes the full build pipeline.
+// If schema.dbml exists it is used for DDL and validation (DBML mode).
+// If schema.dbml does not exist the schema is inferred from the entity files
+// (schema-less mode) and all user columns are stored as TEXT.
 func Build(ctx context.Context, opts Options) (*Result, error) {
 	start := time.Now()
-	result := &Result{}
 
-	// Load config if not provided.
 	cfg := opts.Config
 	if cfg == nil {
 		var err error
@@ -55,14 +55,26 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 		}
 	}
 
-	// Parse schema.dbml.
+	schemaPath := filepath.Join(opts.RootDir, cfg.SchemaFile)
+	if _, err := os.Stat(schemaPath); errors.Is(err, os.ErrNotExist) {
+		return buildSchemaless(ctx, opts, cfg, start)
+	}
+	return buildWithDBML(ctx, opts, cfg, start)
+}
+
+// ---------------------------------------------------------------------------
+// DBML mode
+// ---------------------------------------------------------------------------
+
+func buildWithDBML(ctx context.Context, opts Options, cfg *config.Config, start time.Time) (*Result, error) {
+	result := &Result{}
+
 	schemaPath := filepath.Join(opts.RootDir, cfg.SchemaFile)
 	dbmlSchema, err := dbml.ParseFile(schemaPath)
 	if err != nil {
 		return nil, fmt.Errorf("parsing schema %q: %w", schemaPath, err)
 	}
 
-	// Generate and execute DDL.
 	gen := schema.New(dbmlSchema, cfg)
 	ddl, err := gen.DDL()
 	if err != nil {
@@ -79,24 +91,17 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 		return nil, fmt.Errorf("applying DDL: %w", err)
 	}
 
-	// Set up file registry and validator.
 	reg := loader.NewRegistry()
 	val := validator.New(dbmlSchema, cfg)
-	stdCols := cfg.StandardColumnNames()
-
-	// Track tables that have been populated.
 	tablesSeen := make(map[string]struct{})
 
-	// Walk the root directory.
-	if err := filepath.WalkDir(opts.RootDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
+	if err := filepath.WalkDir(opts.RootDir, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
 		}
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
-		// Skip hidden directories.
 		if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
 			return filepath.SkipDir
 		}
@@ -104,13 +109,10 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 			return nil
 		}
 
-		// Skip special files.
 		name := d.Name()
 		if name == cfg.SchemaFile || name == "sqlfs.yaml" {
 			return nil
 		}
-
-		// Skip unsupported extensions.
 		if !reg.IsSupported(path) {
 			return nil
 		}
@@ -120,43 +122,46 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 			return err
 		}
 
-		// Load file.
+		entityType := loader.EntityType(relPath)
+		if entityType == "" {
+			log.Printf("warning: skipping %q: no entity type in filename (expected name.entity-type.ext)", relPath)
+			return nil
+		}
+
 		fr, err := reg.LoadFile(path, relPath)
 		if err != nil {
 			return fmt.Errorf("loading %q: %w", relPath, err)
 		}
-
 		if len(fr.Records) == 0 {
 			return nil
 		}
 
-		// Duck-type: determine which schema table this entity belongs to.
-		matched := matchTable(dbmlSchema.Tables, fr.Records[0].Fields, stdCols)
-		if matched == nil {
-			log.Printf("warning: skipping %q: fields do not match any schema table", relPath)
-			return nil
-		}
-		fr.TableName = matched.Name
+		fr.EntityType = entityType
 
-		// Validate records.
-		valid, warns, err := val.Validate(fr)
+		// For validation, use only the scalar fields of the primary record.
+		// Array/object fields will be expanded into child tables — they are not
+		// directly validated against the DBML schema.
+		flatFR := scalarFileRecord(fr)
+		valid, warns, err := val.Validate(flatFR)
 		if err != nil {
 			return fmt.Errorf("validating %q: %w", relPath, err)
 		}
 		result.Warnings = append(result.Warnings, warns...)
 
-		// Insert valid records.
-		for _, rec := range valid {
-			if err := insertRecord(db, fr, rec, cfg); err != nil {
-				return fmt.Errorf("inserting record %q#%s: %w", relPath, rec.Key, err)
+		if len(valid) == 0 {
+			return nil
+		}
+
+		// Expand and insert.
+		pk := loader.EntityPK(relPath)
+		expanded := expandEntity(entityType, pk, fr, fr.Records[0].Fields, nil)
+		for _, exp := range expanded {
+			if err := insertExpandedRecord(db, exp, cfg); err != nil {
+				return fmt.Errorf("inserting from %q: %w", relPath, err)
 			}
 			result.RecordsTotal++
 		}
-
-		if len(valid) > 0 {
-			tablesSeen[fr.TableName] = struct{}{}
-		}
-
+		tablesSeen[entityType] = struct{}{}
 		return nil
 	}); err != nil {
 		return nil, err
@@ -164,12 +169,9 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 
 	result.TablesBuilt = len(tablesSeen)
 
-	// Ensure output directory exists.
 	if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0755); err != nil {
 		return nil, fmt.Errorf("creating output directory: %w", err)
 	}
-
-	// Write output.
 	if err := db.SaveTo(opts.OutputFile); err != nil {
 		return nil, fmt.Errorf("saving database: %w", err)
 	}
@@ -178,75 +180,408 @@ func Build(ctx context.Context, opts Options) (*Result, error) {
 	return result, nil
 }
 
-// matchTable finds the schema table whose columns best match the given fields.
-// Standard column names are excluded from matching.
-// Returns nil if no table has any matching columns.
-func matchTable(tables []*dbml.Table, fields map[string]any, stdCols map[string]struct{}) *dbml.Table {
-	fieldSet := make(map[string]struct{}, len(fields))
-	for k := range fields {
-		if _, isStd := stdCols[strings.ToLower(k)]; !isStd {
-			fieldSet[strings.ToLower(k)] = struct{}{}
-		}
+// scalarFileRecord returns a copy of fr whose Records contain only scalar fields.
+// Array and object fields are stripped so validation only checks flat columns.
+func scalarFileRecord(fr *loader.FileRecord) *loader.FileRecord {
+	flat := &loader.FileRecord{
+		EntityType: fr.EntityType,
+		FilePath:   fr.FilePath,
+		Records:    make([]loader.Record, 0, len(fr.Records)),
+		ModTime:    fr.ModTime,
+		CreatedAt:  fr.CreatedAt,
+		Checksum:   fr.Checksum,
 	}
-
-	var best *dbml.Table
-	bestScore := -1
-
-	for _, t := range tables {
-		score := 0
-		for _, col := range t.Columns {
-			if _, ok := fieldSet[strings.ToLower(col.Name)]; ok {
-				score++
+	for _, rec := range fr.Records {
+		scalar := loader.Record{Key: rec.Key, Fields: make(map[string]any)}
+		for k, v := range rec.Fields {
+			switch v.(type) {
+			case []any, map[string]any:
+				// Skip — will be expanded into child tables.
+			default:
+				scalar.Fields[k] = v
 			}
 		}
-		// Prefer higher score; break ties alphabetically for determinism.
-		if score > bestScore || (score == bestScore && best != nil && t.Name < best.Name) {
-			bestScore = score
-			best = t
+		flat.Records = append(flat.Records, scalar)
+	}
+	return flat
+}
+
+// ---------------------------------------------------------------------------
+// Schema-less mode
+// ---------------------------------------------------------------------------
+
+// discoveredTable tracks columns found for one table during the scan pass.
+type discoveredTable struct {
+	name    string
+	columns []string
+	seen    map[string]struct{}
+}
+
+func newDiscoveredTable(name string) *discoveredTable {
+	return &discoveredTable{name: name, seen: make(map[string]struct{})}
+}
+
+func (t *discoveredTable) addColumn(col string) {
+	if _, ok := t.seen[col]; !ok {
+		t.seen[col] = struct{}{}
+		t.columns = append(t.columns, col)
+	}
+}
+
+func buildSchemaless(ctx context.Context, opts Options, cfg *config.Config, start time.Time) (*Result, error) {
+	result := &Result{}
+	reg := loader.NewRegistry()
+
+	// --- Discovery pass ---
+	tables := make(map[string]*discoveredTable)
+	pathIndex := make(map[string]string) // pk → entity type
+
+	if err := filepath.WalkDir(opts.RootDir, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
+			return filepath.SkipDir
+		}
+		if d.IsDir() {
+			return nil
+		}
+		name := d.Name()
+		if name == cfg.SchemaFile || name == "sqlfs.yaml" {
+			return nil
+		}
+		if !reg.IsSupported(path) {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(opts.RootDir, path)
+		if err != nil {
+			return err
+		}
+
+		entityType := loader.EntityType(relPath)
+		if entityType == "" {
+			return nil
+		}
+
+		pk := loader.EntityPK(relPath)
+		pathIndex[pk] = entityType
+
+		fr, err := reg.LoadFile(path, relPath)
+		if err != nil {
+			return nil // skip on error in discovery
+		}
+		if len(fr.Records) > 0 {
+			discoverColumns(entityType, fr.Records[0].Fields, tables, pathIndex)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	// --- DDL generation ---
+	sc := cfg.StandardColumns
+	var ddl []string
+	for _, tbl := range tables {
+		var cols []string
+		cols = append(cols, fmt.Sprintf(`  %s TEXT PRIMARY KEY`, sqliteQuote(sc.PK)))
+		cols = append(cols, fmt.Sprintf(`  %s TEXT`, sqliteQuote(sc.Path)))
+		cols = append(cols, fmt.Sprintf(`  %s TEXT`, sqliteQuote(sc.CreatedAt)))
+		cols = append(cols, fmt.Sprintf(`  %s TEXT`, sqliteQuote(sc.ModifiedAt)))
+		cols = append(cols, fmt.Sprintf(`  %s TEXT`, sqliteQuote(sc.Checksum)))
+		cols = append(cols, fmt.Sprintf(`  %s TEXT`, sqliteQuote(sc.ULID)))
+		for _, col := range tbl.columns {
+			cols = append(cols, fmt.Sprintf(`  %s TEXT`, sqliteQuote(col)))
+		}
+		ddl = append(ddl, fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (\n%s\n)",
+			sqliteQuote(tbl.name), strings.Join(cols, ",\n")))
+	}
+
+	db, err := sqlite.OpenMemory()
+	if err != nil {
+		return nil, fmt.Errorf("opening database: %w", err)
+	}
+	defer db.Close()
+
+	if err := db.ExecDDL(ddl); err != nil {
+		return nil, fmt.Errorf("applying DDL: %w", err)
+	}
+
+	// --- Insert pass ---
+	tablesSeen := make(map[string]struct{})
+
+	if err := filepath.WalkDir(opts.RootDir, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if d.IsDir() && strings.HasPrefix(d.Name(), ".") {
+			return filepath.SkipDir
+		}
+		if d.IsDir() {
+			return nil
+		}
+		name := d.Name()
+		if name == cfg.SchemaFile || name == "sqlfs.yaml" {
+			return nil
+		}
+		if !reg.IsSupported(path) {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(opts.RootDir, path)
+		if err != nil {
+			return err
+		}
+
+		entityType := loader.EntityType(relPath)
+		if entityType == "" {
+			return nil
+		}
+
+		fr, err := reg.LoadFile(path, relPath)
+		if err != nil {
+			return fmt.Errorf("loading %q: %w", relPath, err)
+		}
+		if len(fr.Records) == 0 {
+			return nil
+		}
+
+		pk := loader.EntityPK(relPath)
+		expanded := expandEntity(entityType, pk, fr, fr.Records[0].Fields, pathIndex)
+		for _, exp := range expanded {
+			if err := insertExpandedRecord(db, exp, cfg); err != nil {
+				log.Printf("warning: insert error for table %s pk %s: %v", exp.TableName, exp.PK, err)
+			} else {
+				result.RecordsTotal++
+				tablesSeen[exp.TableName] = struct{}{}
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	result.TablesBuilt = len(tablesSeen)
+
+	if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0755); err != nil {
+		return nil, fmt.Errorf("creating output directory: %w", err)
+	}
+	if err := db.SaveTo(opts.OutputFile); err != nil {
+		return nil, fmt.Errorf("saving database: %w", err)
+	}
+
+	result.Duration = time.Since(start)
+	return result, nil
+}
+
+// discoverColumns walks a field map and records column names for each table.
+func discoverColumns(entityType string, fields map[string]any, tables map[string]*discoveredTable, pathIndex map[string]string) {
+	tbl, ok := tables[entityType]
+	if !ok {
+		tbl = newDiscoveredTable(entityType)
+		tables[entityType] = tbl
+	}
+
+	for key, val := range fields {
+		switch v := val.(type) {
+		case []any:
+			childType := entityType + "_" + key
+			parentFKCol := entityType + "_pk"
+			childTbl, ok := tables[childType]
+			if !ok {
+				childTbl = newDiscoveredTable(childType)
+				tables[childType] = childTbl
+			}
+			childTbl.addColumn(parentFKCol)
+			discoverArrayColumns(childType, v, tables, pathIndex)
+		default:
+			_ = v
+			tbl.addColumn(key)
+		}
+	}
+}
+
+func discoverArrayColumns(childType string, elems []any, tables map[string]*discoveredTable, pathIndex map[string]string) {
+	tbl := tables[childType]
+	for _, elem := range elems {
+		switch e := elem.(type) {
+		case map[string]any:
+			discoverColumns(childType, e, tables, pathIndex)
+		case loader.EntityRef:
+			refEntityType := pathIndex[e.Path]
+			if refEntityType == "" {
+				tbl.addColumn("ref_pk")
+			} else {
+				tbl.addColumn(refEntityType + "_pk")
+			}
+		default:
+			tbl.addColumn("value")
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Entity expansion
+// ---------------------------------------------------------------------------
+
+// expandEntity shreds an entity's raw fields into a primary ExpandedRecord plus
+// child ExpandedRecords for each nested array field.
+func expandEntity(entityType, pk string, fr *loader.FileRecord, fields map[string]any, pathIndex map[string]string) []*loader.ExpandedRecord {
+	primary := &loader.ExpandedRecord{
+		TableName:  entityType,
+		PK:         pk,
+		SourcePath: fr.FilePath,
+		ModTime:    fr.ModTime,
+		CreatedAt:  fr.CreatedAt,
+		Checksum:   fr.Checksum,
+		Fields:     make(map[string]any),
+	}
+
+	var all []*loader.ExpandedRecord
+	all = append(all, primary)
+
+	for key, val := range fields {
+		switch v := val.(type) {
+		case []any:
+			children := expandArray(entityType, pk, key, fr, v, pathIndex)
+			all = append(all, children...)
+		case loader.EntityRef:
+			primary.Fields[key] = v.Path
+		default:
+			primary.Fields[key] = flattenScalar(val)
 		}
 	}
 
-	if bestScore <= 0 {
-		return nil
-	}
-	return best
+	return all
 }
 
-// insertRecord inserts a single record into the SQLite database.
-func insertRecord(db *sqlite.DB, fr *loader.FileRecord, rec loader.Record, cfg *config.Config) error {
+// expandArray creates child ExpandedRecords from one array field.
+func expandArray(parentType, parentPK, arrayKey string, fr *loader.FileRecord, elems []any, pathIndex map[string]string) []*loader.ExpandedRecord {
+	childTable := parentType + "_" + arrayKey
+	parentFKCol := parentType + "_pk"
+	var all []*loader.ExpandedRecord
+
+	for i, elem := range elems {
+		childPK := parentPK + "#" + childTable + "-" + strconv.Itoa(i)
+
+		switch e := elem.(type) {
+		case map[string]any:
+			// Nested object → recursively expand with FK injected.
+			childFields := make(map[string]any, len(e)+1)
+			childFields[parentFKCol] = parentPK
+			for k, v := range e {
+				childFields[k] = v
+			}
+			childFR := &loader.FileRecord{
+				EntityType: childTable,
+				FilePath:   fr.FilePath,
+				ModTime:    fr.ModTime,
+				CreatedAt:  fr.CreatedAt,
+				Checksum:   fr.Checksum,
+			}
+			children := expandEntity(childTable, childPK, childFR, childFields, pathIndex)
+			all = append(all, children...)
+
+		case loader.EntityRef:
+			// Reference → join record.
+			refEntityType := ""
+			if pathIndex != nil {
+				refEntityType = pathIndex[e.Path]
+			}
+			refFKCol := "ref_pk"
+			if refEntityType != "" {
+				refFKCol = refEntityType + "_pk"
+			}
+			join := &loader.ExpandedRecord{
+				TableName:  childTable,
+				PK:         childPK,
+				SourcePath: fr.FilePath,
+				ModTime:    fr.ModTime,
+				CreatedAt:  fr.CreatedAt,
+				Checksum:   fr.Checksum,
+				Fields: map[string]any{
+					parentFKCol: parentPK,
+					refFKCol:    e.Path,
+				},
+			}
+			all = append(all, join)
+
+		default:
+			// Scalar → value record.
+			rec := &loader.ExpandedRecord{
+				TableName:  childTable,
+				PK:         childPK,
+				SourcePath: fr.FilePath,
+				ModTime:    fr.ModTime,
+				CreatedAt:  fr.CreatedAt,
+				Checksum:   fr.Checksum,
+				Fields: map[string]any{
+					parentFKCol: parentPK,
+					"value":     flattenScalar(elem),
+				},
+			}
+			all = append(all, rec)
+		}
+	}
+
+	return all
+}
+
+// flattenScalar converts a value to a scalar suitable for SQLite.
+// Nested structures (maps, slices) are JSON-encoded as strings.
+func flattenScalar(v any) any {
+	switch v.(type) {
+	case string, int, int8, int16, int32, int64,
+		uint, uint8, uint16, uint32, uint64,
+		float32, float64, bool, nil:
+		return v
+	default:
+		b, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("%v", v)
+		}
+		return string(b)
+	}
+}
+
+// insertExpandedRecord inserts one expanded record into SQLite.
+func insertExpandedRecord(db *sqlite.DB, rec *loader.ExpandedRecord, cfg *config.Config) error {
 	sc := cfg.StandardColumns
 
-	cols := make([]string, 0, len(rec.Fields)+5)
-	vals := make([]any, 0, len(rec.Fields)+5)
+	cols := make([]string, 0, len(rec.Fields)+6)
+	vals := make([]any, 0, len(rec.Fields)+6)
 
 	for col, val := range rec.Fields {
+		if ref, ok := val.(loader.EntityRef); ok {
+			val = ref.Path
+		}
 		cols = append(cols, col)
 		vals = append(vals, val)
 	}
 
-	// Standard columns.
-	path := fr.FilePath + "#" + rec.Key
-	createdAt := fr.CreatedAt
-	modifiedAt := fr.ModTime
-
-	// Generate ULID with the file's created-at time as the timestamp component.
 	entropy := rand.New(rand.NewSource(time.Now().UnixNano()))
-	id := ulid.MustNew(ulid.Timestamp(createdAt), entropy)
+	id := ulid.MustNew(ulid.Timestamp(rec.CreatedAt), entropy)
 
-	cols = append(cols,
-		sc.Path, sc.CreatedAt, sc.ModifiedAt, sc.Checksum, sc.ULID,
-	)
+	cols = append(cols, sc.PK, sc.Path, sc.CreatedAt, sc.ModifiedAt, sc.Checksum, sc.ULID)
 	vals = append(vals,
-		path,
-		createdAt.UTC().Format(time.RFC3339),
-		modifiedAt.UTC().Format(time.RFC3339),
-		fr.Checksum,
+		rec.PK,
+		rec.SourcePath+"#"+rec.PK,
+		rec.CreatedAt.UTC().Format(time.RFC3339),
+		rec.ModTime.UTC().Format(time.RFC3339),
+		rec.Checksum,
 		id.String(),
 	)
 
-	if err := db.InsertRecord(fr.TableName, cols, vals); err != nil {
-		log.Printf("warning: insert error for %s#%s: %v", fr.FilePath, rec.Key, err)
+	if err := db.InsertRecord(rec.TableName, cols, vals); err != nil {
+		log.Printf("warning: insert error for table %s pk %s: %v", rec.TableName, rec.PK, err)
 		return err
 	}
 	return nil
+}
+
+func sqliteQuote(name string) string {
+	return `"` + strings.ReplaceAll(name, `"`, `""`) + `"`
 }

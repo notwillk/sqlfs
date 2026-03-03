@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entry>
-  <product_id>3</product_id>
+  <product_pk>products/studio-headphones</product_pk>
   <warehouse>US-Chicago</warehouse>
   <quantity>88</quantity>
   <reorder_at>20</reorder_at>

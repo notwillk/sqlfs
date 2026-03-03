@@ -32,3 +32,6 @@ go.work.sum
 # .vscode/
 
 dist
+
+# Go module cache (GOPATH/pkg) — auto-populated, never commit
+src/pkg/

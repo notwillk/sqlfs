@@ -197,6 +197,7 @@ func GenerateConfigSchema() ([]byte, error) {
 				"type":        "object",
 				"description": "Custom names for the standard injected columns",
 				"properties": map[string]any{
+					"pk":          columnNameProp("__pk__"),
 					"path":        columnNameProp("__path__"),
 					"created_at":  columnNameProp("__created_at__"),
 					"modified_at": columnNameProp("__modified_at__"),

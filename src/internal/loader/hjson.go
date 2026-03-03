@@ -32,6 +32,7 @@ func (HJSONLoader) Load(absPath, relPath string) (*FileRecord, error) {
 		m = map[string]any{"value": raw}
 	}
 
-	fr.Records = []Record{buildRecord(recordKey(relPath), m)}
+	fr.EntityType = EntityType(relPath)
+	fr.Records = []Record{buildRecord(EntityKey(relPath), m)}
 	return fr, nil
 }

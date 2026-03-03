@@ -16,8 +16,9 @@ const (
 	InvalidFail   InvalidBehavior = "fail"
 )
 
-// StandardColumns holds the column names for the five injected standard columns.
+// StandardColumns holds the column names for the six injected standard columns.
 type StandardColumns struct {
+	PK         string `yaml:"pk"`
 	Path       string `yaml:"path"`
 	CreatedAt  string `yaml:"created_at"`
 	ModifiedAt string `yaml:"modified_at"`
@@ -56,6 +57,7 @@ func Default() *Config {
 		UsernameEnvVar: "SQLFS_USERNAME",
 		PasswordEnvVar: "SQLFS_PASSWORD",
 		StandardColumns: StandardColumns{
+			PK:         "__pk__",
 			Path:       "__path__",
 			CreatedAt:  "__created_at__",
 			ModifiedAt: "__modified_at__",
@@ -114,6 +116,9 @@ func Load(rootDir string) (*Config, error) {
 	if fc.Columns.ULID != "" {
 		cfg.StandardColumns.ULID = fc.Columns.ULID
 	}
+	if fc.Columns.PK != "" {
+		cfg.StandardColumns.PK = fc.Columns.PK
+	}
 
 	return cfg, nil
 }
@@ -138,9 +143,10 @@ func (c *Config) WithPort(override int) *Config {
 	return &copy
 }
 
-// StandardColumnNames returns all five standard column names as a set for quick lookup.
+// StandardColumnNames returns all standard column names as a set for quick lookup.
 func (c *Config) StandardColumnNames() map[string]struct{} {
 	return map[string]struct{}{
+		c.StandardColumns.PK:         {},
 		c.StandardColumns.Path:       {},
 		c.StandardColumns.CreatedAt:  {},
 		c.StandardColumns.ModifiedAt: {},

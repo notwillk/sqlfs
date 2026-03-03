@@ -1,0 +1,10 @@
+name: Test Meal
+date: 2026-01-01
+
+courses:
+  - name: First Course
+    description: A starter
+    recipes:
+      - "&recipes/soup"
+  - name: Second Course
+    description: A main

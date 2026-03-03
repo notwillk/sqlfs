@@ -11,6 +11,7 @@ import (
 )
 
 // setupTestDir creates a temp dir with a users schema and two single-entity files.
+// Files use the new name.entity-type.yaml convention.
 func setupTestDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -26,13 +27,12 @@ Table users {
 		t.Fatal(err)
 	}
 
-	// Each file is a single entity; fields are matched to the users table by duck-typing.
 	alice := "id: 1\nname: Alice Smith\nemail: alice@example.com\n"
 	bob := "id: 2\nname: Bob Jones\nemail: bob@example.com\n"
-	if err := os.WriteFile(filepath.Join(dir, "alice.yaml"), []byte(alice), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "alice.users.yaml"), []byte(alice), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "bob.yaml"), []byte(bob), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "bob.users.yaml"), []byte(bob), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,12 +60,10 @@ func TestBuild_Basic(t *testing.T) {
 		t.Errorf("TablesBuilt = %d, want 1", result.TablesBuilt)
 	}
 
-	// Verify the output file exists.
 	if _, err := os.Stat(outFile); err != nil {
 		t.Fatalf("output file not created: %v", err)
 	}
 
-	// Open and query the output file.
 	db, err := sqlite.Open(outFile)
 	if err != nil {
 		t.Fatalf("opening output: %v", err)
@@ -104,7 +102,7 @@ func TestBuild_StandardColumns(t *testing.T) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT __path__, __checksum__, __ulid__ FROM users LIMIT 1")
+	rows, err := db.Query("SELECT __pk__, __path__, __checksum__, __ulid__ FROM users LIMIT 1")
 	if err != nil {
 		t.Fatalf("query standard cols: %v", err)
 	}
@@ -113,9 +111,12 @@ func TestBuild_StandardColumns(t *testing.T) {
 	if !rows.Next() {
 		t.Fatal("expected at least one row")
 	}
-	var path, checksum, uid string
-	if err := rows.Scan(&path, &checksum, &uid); err != nil {
+	var pk, path, checksum, uid string
+	if err := rows.Scan(&pk, &path, &checksum, &uid); err != nil {
 		t.Fatal(err)
+	}
+	if pk == "" {
+		t.Error("__pk__ should not be empty")
 	}
 	if path == "" {
 		t.Error("__path__ should not be empty")
@@ -126,21 +127,16 @@ func TestBuild_StandardColumns(t *testing.T) {
 	if uid == "" {
 		t.Error("__ulid__ should not be empty")
 	}
-	// Path should follow the pattern file#key.
-	if len(path) < 3 || path[len(path)-1] == '#' {
-		t.Errorf("unexpected __path__ format: %q", path)
-	}
 }
 
 func TestBuild_SkipsSchemaAndConfig(t *testing.T) {
 	dir := t.TempDir()
 	schema := `Table t { id integer [pk] }`
 	os.WriteFile(filepath.Join(dir, "schema.dbml"), []byte(schema), 0644)
-	// sqlfs.yaml and schema.dbml should be skipped.
 	os.WriteFile(filepath.Join(dir, "sqlfs.yaml"), []byte("port: 9999"), 0644)
 
-	// A single-entity data file — id matches column in table t.
-	os.WriteFile(filepath.Join(dir, "rec.yaml"), []byte("id: 1\n"), 0644)
+	// Entity file with entity type "t" matching table name.
+	os.WriteFile(filepath.Join(dir, "rec.t.yaml"), []byte("id: 1\n"), 0644)
 
 	outFile := filepath.Join(t.TempDir(), "test.db")
 	result, err := Build(context.Background(), Options{
@@ -170,10 +166,10 @@ Table posts {
 `
 	os.WriteFile(filepath.Join(dir, "schema.dbml"), []byte(schema), 0644)
 
-	// One user, two posts — each in its own file.
-	os.WriteFile(filepath.Join(dir, "alice.yaml"), []byte("id: 1\nname: Alice\n"), 0644)
-	os.WriteFile(filepath.Join(dir, "hello.yaml"), []byte("id: 1\ntitle: Hello\n"), 0644)
-	os.WriteFile(filepath.Join(dir, "world.yaml"), []byte("id: 2\ntitle: World\n"), 0644)
+	// One user, two posts — each with explicit entity type.
+	os.WriteFile(filepath.Join(dir, "alice.users.yaml"), []byte("id: 1\nname: Alice\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "hello.posts.yaml"), []byte("id: 1\ntitle: Hello\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "world.posts.yaml"), []byte("id: 2\ntitle: World\n"), 0644)
 
 	outFile := filepath.Join(t.TempDir(), "test.db")
 	result, err := Build(context.Background(), Options{
@@ -192,17 +188,146 @@ Table posts {
 	}
 }
 
-func TestBuild_MissingSchema(t *testing.T) {
+// TestBuild_NoEntityType verifies files without entity type are skipped.
+func TestBuild_NoEntityType(t *testing.T) {
 	dir := t.TempDir()
-	// No schema.dbml file.
+	schema := `Table users { id integer [pk] }`
+	os.WriteFile(filepath.Join(dir, "schema.dbml"), []byte(schema), 0644)
+	// File without entity type in name → should be skipped with a warning.
+	os.WriteFile(filepath.Join(dir, "noentity.yaml"), []byte("id: 1\n"), 0644)
+
 	outFile := filepath.Join(t.TempDir(), "test.db")
-	_, err := Build(context.Background(), Options{
+	result, err := Build(context.Background(), Options{
 		RootDir:    dir,
 		OutputFile: outFile,
 		Config:     config.Default(),
 	})
-	if err == nil {
-		t.Fatal("expected error for missing schema")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if result.RecordsTotal != 0 {
+		t.Errorf("RecordsTotal = %d, want 0 (file without entity type should be skipped)", result.RecordsTotal)
+	}
+}
+
+// TestBuild_SchemalessMode verifies that schema-less mode creates tables and inserts records.
+func TestBuild_SchemalessMode(t *testing.T) {
+	dir := t.TempDir()
+	// No schema.dbml → schema-less mode.
+
+	// Write two entity files.
+	os.WriteFile(filepath.Join(dir, "alice.user.yaml"), []byte("name: Alice\nage: 30\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "bob.user.yaml"), []byte("name: Bob\nage: 25\n"), 0644)
+
+	outFile := filepath.Join(t.TempDir(), "test.db")
+	result, err := Build(context.Background(), Options{
+		RootDir:    dir,
+		OutputFile: outFile,
+		Config:     config.Default(),
+	})
+	if err != nil {
+		t.Fatalf("Build (schema-less): %v", err)
+	}
+	if result.RecordsTotal != 2 {
+		t.Errorf("RecordsTotal = %d, want 2", result.RecordsTotal)
+	}
+
+	db, err := sqlite.Open(outFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT __pk__, name FROM user ORDER BY name")
+	if err != nil {
+		t.Fatalf("query user table: %v", err)
+	}
+	defer rows.Close()
+
+	var got []string
+	for rows.Next() {
+		var pk, name string
+		rows.Scan(&pk, &name)
+		got = append(got, pk+":"+name)
+	}
+	if len(got) != 2 {
+		t.Errorf("got %d rows, want 2: %v", len(got), got)
+	}
+}
+
+// TestBuild_SchemalessNested verifies nested arrays create child tables in schema-less mode.
+func TestBuild_SchemalessNested(t *testing.T) {
+	dir := t.TempDir()
+	// No schema.dbml.
+
+	meal := `name: Spring Meal
+courses:
+  - name: Starter
+    description: A small bite
+  - name: Main
+    description: The main course
+`
+	os.WriteFile(filepath.Join(dir, "spring.meal.yaml"), []byte(meal), 0644)
+
+	outFile := filepath.Join(t.TempDir(), "test.db")
+	result, err := Build(context.Background(), Options{
+		RootDir:    dir,
+		OutputFile: outFile,
+		Config:     config.Default(),
+	})
+	if err != nil {
+		t.Fatalf("Build (nested): %v", err)
+	}
+	// 1 meal + 2 meal_courses = 3 records.
+	if result.RecordsTotal != 3 {
+		t.Errorf("RecordsTotal = %d, want 3", result.RecordsTotal)
+	}
+
+	db, err := sqlite.Open(outFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Both tables should exist.
+	var mealCount, courseCount int
+	if r, err := db.Query("SELECT COUNT(*) FROM meal"); err == nil {
+		if r.Next() {
+			r.Scan(&mealCount)
+		}
+		r.Close()
+	}
+	if r, err := db.Query("SELECT COUNT(*) FROM meal_courses"); err == nil {
+		if r.Next() {
+			r.Scan(&courseCount)
+		}
+		r.Close()
+	}
+
+	if mealCount != 1 {
+		t.Errorf("meal count = %d, want 1", mealCount)
+	}
+	if courseCount != 2 {
+		t.Errorf("meal_courses count = %d, want 2", courseCount)
+	}
+}
+
+// TestBuild_MissingSchema verifies schema-less mode runs successfully with no entity files.
+func TestBuild_MissingSchema(t *testing.T) {
+	dir := t.TempDir()
+	// No schema.dbml, no entity files.
+	outFile := filepath.Join(t.TempDir(), "test.db")
+	result, err := Build(context.Background(), Options{
+		RootDir:    dir,
+		OutputFile: outFile,
+		Config:     config.Default(),
+	})
+	// Schema-less mode should succeed even with no files.
+	if err != nil {
+		t.Fatalf("Build (schema-less empty): unexpected error: %v", err)
+	}
+	if result.RecordsTotal != 0 {
+		t.Errorf("RecordsTotal = %d, want 0", result.RecordsTotal)
 	}
 }
 

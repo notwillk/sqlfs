@@ -1,5 +1,4 @@
-id: 2
 name: Computers
 slug: computers
 description: Laptops, desktops, and peripherals.
-parent_id: 1
+parent_pk: categories/electronics

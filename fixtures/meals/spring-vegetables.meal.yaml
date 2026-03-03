@@ -1,0 +1,15 @@
+name: Spring Vegetables
+date: 2026-03-15
+
+courses:
+  - name: Amuse-Bouche
+    description: Warm roasted celeriac velouté shooter
+    plating: Served in a small shooter glass with a drizzle of chili oil on top
+    recipes:
+      - "&recipes/celeriac-veloute"
+  - name: Salad
+    description: Watercress salad
+    plating: Small plate
+    recipes:
+      - "&recipes/watercress-salad"
+      - "&recipes/ricotta-herb-caramelle"

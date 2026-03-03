@@ -1,0 +1,32 @@
+name: Spring Vegetables
+inspiration:
+  - https://www.thekitchn.com/watercress-salad-recipe-23198710
+  - https://www.loveandlemons.com/watercress-salad/
+phases:
+  - name: salad-dressing
+    description: Make salad dressing
+    ingredients:
+      - name: olive oil 
+        qty: 1/4
+        unit: cup
+      - name: lemon juice
+        qty: 2
+        unit: tablespoon
+      - name: Dijon mustard
+        qty: 1
+        unit: teaspoon
+      - name: Honey
+        qty: 1
+        unit: teaspoon
+      - name: Salt
+      - name: Pepper
+    steps:
+      - Combine olive oil, lemon juice, Dijon mustard, honey, salt, and pepper in a small bowl.
+      - Whisk until well combined.
+    storage: Store dressing in an airtight container in the refrigerator for up to 1 week.
+  - description: Plating
+    follows:
+      - salad-dressing
+    steps:
+      - Toss watercress with the prepared dressing.
+      - Top with ricotta herb caramelle.

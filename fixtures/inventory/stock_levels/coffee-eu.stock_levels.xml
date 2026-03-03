@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entry>
-  <product_id>4</product_id>
+  <product_pk>products/premium-coffee</product_pk>
   <warehouse>EU-Amsterdam</warehouse>
   <quantity>200</quantity>
   <reorder_at>30</reorder_at>

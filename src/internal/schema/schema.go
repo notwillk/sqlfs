@@ -57,6 +57,7 @@ func (g *Generator) CreateTableSQL(t *dbml.Table) (string, error) {
 	}
 
 	// Standard columns.
+	cols = append(cols, fmt.Sprintf("  %s TEXT", sqliteName(sc.PK)))
 	cols = append(cols, fmt.Sprintf("  %s TEXT", sqliteName(sc.Path)))
 	cols = append(cols, fmt.Sprintf("  %s TEXT", sqliteName(sc.CreatedAt)))
 	cols = append(cols, fmt.Sprintf("  %s TEXT", sqliteName(sc.ModifiedAt)))
