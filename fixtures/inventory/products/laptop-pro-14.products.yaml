@@ -1,9 +1,8 @@
-id: 1
 sku: TC-LP14-SLV
 name: ProBook Laptop 14"
 description: Lightweight 14-inch laptop with 16 GB RAM and 512 GB SSD.
-category_id: 2
-supplier_id: 1
+category_pk: categories/computers
+supplier_pk: suppliers/techcore
 unit: each
 unit_price: 1299.99
 status: active

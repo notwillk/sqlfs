@@ -1,0 +1,52 @@
+name: Celeriac Velouté
+inspiration:
+  - https://kitcheninspirations.wordpress.com/2013/03/14/celeriac-veloute-or-soup
+phases:
+  - name: make-stock
+    description: Make vegetable stock
+    ingredients:
+      - lots of veggies
+    steps:
+      - Chop all the vegetables into large chunks
+      - Place the vegetables in instant pot and cover with water
+      - Cook at pressure for 2 hours, with natural release
+      - Strain the vegetables, reserving the liquid as vegetable stock.
+    storage: Store vegetable stock in an airtight container in the refrigerator for up to 1 week.
+  - name: make-veloute
+    description: Make Velouté
+    follows:
+      - make-stock
+    ingredients:
+      - name: celery root
+        preparation: cleaned, peeled and cut into relatively equal cubes
+        unit: count
+        qty: 1
+      - name: sweet onion, large
+        preparation: cut into quarters
+        unit: count
+        qty: 1/2
+      - name: garlic head, small
+        preparation: bottom chopped off and excess skin removed
+        unit: count
+        qty: 1
+      - name: extra virgin olive oil
+        qty: 3
+        unit: tablespoon
+      - name: Kosher Salt
+      - name: Pepper
+      - name: Butter
+        qty: 1
+        unit: tablespoon
+    steps:
+      - Spray a large cookie sheet with non-stick spray and distribute the onion and celeriac cubes evenly. Roast in a pre-heated oven set at 350°F until soft.
+      - Add the EVOO to a small ramekin and place the garlic cut side down. Salt with sea salt. Cover with aluminum foil and bake with the rest of the vegetables until soft.
+      - In a large pyrex bowl, add the cooked vegetables with the olive oil from the roasted garlic, and squeeze the roasted garlic into the same bowl. Add vegetable stock and purée with your immersion blender until very smooth. Press through a fine sieve to make sure your soup is very creamy.
+    storage: Store soup in an airtight container in the refrigerator for up to 1 week.
+  - description: Plating
+    follows:
+      - make-veloute
+    ingredients:
+      - name: chili oil 
+    steps:
+      - Reheat the soup
+      - Serve in a small shooter glass with a drizzle of chili oil on top

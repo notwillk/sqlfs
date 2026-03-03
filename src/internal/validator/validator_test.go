@@ -19,7 +19,7 @@ func makeSchema(src string, t *testing.T) *dbml.Schema {
 
 func makeFileRecord(tableName string, records []loader.Record) *loader.FileRecord {
 	return &loader.FileRecord{
-		TableName: tableName,
+		EntityType: tableName,
 		FilePath:  tableName + ".yaml",
 		Records:   records,
 	}

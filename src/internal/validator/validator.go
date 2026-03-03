@@ -39,7 +39,7 @@ func New(schema *dbml.Schema, cfg *config.Config) *Validator {
 //   - warn mode:   collects all violations as warnings, returns valid records
 //   - silent mode: drops invalid records silently, returns valid records
 func (v *Validator) Validate(fr *loader.FileRecord) ([]loader.Record, []ValidationError, error) {
-	table := v.Schema.TableByName(fr.TableName)
+	table := v.Schema.TableByName(fr.EntityType)
 	if table == nil {
 		// No schema for this table: pass all records through without validation.
 		return fr.Records, nil, nil
@@ -118,6 +118,7 @@ func (v *Validator) validateRecord(rec loader.Record, table *dbml.Table, stdCols
 		colSet[strings.ToLower(col.Name)] = struct{}{}
 	}
 	for _, std := range []string{
+		v.Config.StandardColumns.PK,
 		v.Config.StandardColumns.Path,
 		v.Config.StandardColumns.CreatedAt,
 		v.Config.StandardColumns.ModifiedAt,

@@ -1,9 +1,8 @@
-id: 2
 sku: GP-UH7-BLK
 name: 7-Port USB-C Hub
 description: Powered USB-C hub with 7 ports including HDMI and SD card reader.
-category_id: 1
-supplier_id: 2
+category_pk: categories/electronics
+supplier_pk: suppliers/globalparts
 unit: each
 unit_price: 49.95
 status: active

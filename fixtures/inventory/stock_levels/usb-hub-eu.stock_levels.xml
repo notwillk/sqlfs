@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entry>
-  <product_id>2</product_id>
+  <product_pk>products/usb-hub</product_pk>
   <warehouse>EU-Amsterdam</warehouse>
   <quantity>310</quantity>
   <reorder_at>50</reorder_at>
